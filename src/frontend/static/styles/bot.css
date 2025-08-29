@@ -166,19 +166,23 @@ button[disabled]{
 }
 /* Modal Overlay Styles */
 .chat-modal-overlay {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  z-index: 99999 !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: none; /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
   backdrop-filter: blur(3px);
   padding: 20px;
   box-sizing: border-box;
+}
+
+.chat-modal-overlay.show {
+  display: flex !important;
 }
 
 .chat-modal-container {

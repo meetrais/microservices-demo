@@ -139,24 +139,18 @@
             if (modal) {
                 console.log('Modal found, opening...');
                 
-                // Force modal to be visible with important styles
-                modal.style.setProperty('display', 'flex', 'important');
-                modal.style.setProperty('position', 'fixed', 'important');
-                modal.style.setProperty('top', '0', 'important');
-                modal.style.setProperty('left', '0', 'important');
-                modal.style.setProperty('width', '100vw', 'important');
-                modal.style.setProperty('height', '100vh', 'important');
-                modal.style.setProperty('z-index', '99999', 'important');
-                modal.style.setProperty('background-color', 'rgba(0, 0, 0, 0.7)', 'important');
+                // Show modal using class toggle
+                modal.classList.add('show');
+                modal.style.display = 'flex';
                 
                 document.body.style.overflow = 'hidden';
                 chatModalState.isOpen = true;
                 
-                console.log('Modal styles applied, should be visible now');
+                console.log('Modal opened successfully');
                 
                 // Initialize chat if not done yet
                 if (!chatModalState.isInitialized) {
-                    setTimeout(initializeChatModal, 200);
+                    setTimeout(initializeChatModal, 100);
                     chatModalState.isInitialized = true;
                 }
             } else {
@@ -167,18 +161,16 @@
         }
 
         function closeChatModal() {
+            console.log('Closing chat modal');
             try {
                 const modal = document.getElementById('chat-modal-overlay');
                 if (modal && chatModalState.isOpen) {
+                    modal.classList.remove('show');
                     modal.style.display = 'none';
                     document.body.style.overflow = ''; // Restore background scrolling
                     chatModalState.isOpen = false;
                     
-                    // Return focus to the chat icon
-                    const chatLink = document.querySelector('.chat-link');
-                    if (chatLink) {
-                        chatLink.focus();
-                    }
+                    console.log('Modal closed successfully');
                 }
             } catch (error) {
                 console.error('Failed to close chat modal:', error);
@@ -257,134 +249,29 @@
             usermessage.appendChild(userMessageSpan);
             modalBotMessages.appendChild(usermessage);
 
-            // Add image if present
-            if (modalImage) {
-                const imageDivElement = document.createElement("div");
-                imageDivElement.classList.add("user-image-div");
-                const imageElement = document.createElement("img");
-                imageElement.src = modalImage;
-                imageElement.classList.add("user-image");
-                imageElement.onerror = function() { this.style.display = 'none'; };
-                imageDivElement.appendChild(imageElement);
-                modalBotMessages.appendChild(imageDivElement);
-            }
-
             modalBotMessages.scrollTo(0, modalBotMessages.scrollHeight);
             modalBotInput.value = "";
 
-            // Disable send button and input field
+            // Disable send button and input field temporarily
             modalBotButton.disabled = true;
             modalBotInput.disabled = true;
-            console.log("Modal bot is typing");
 
-            // Construct and render placeholder bot message
-            const botMessage = document.createElement("p");
-            botMessage.classList.add("bot-message-loading");
-            const botMessageSpan = document.createElement("span");
-            botMessageSpan.innerText = "";
-            botMessageSpan.classList.add("bot-message-text");
-            botMessage.classList.add("bot-message");
-            botMessage.appendChild(botMessageSpan);
-            modalBotMessages.appendChild(botMessage);
-            modalBotMessages.scrollTo(0, modalBotMessages.scrollHeight);
-
-            try {
-                // Request a response from the Shopping Assistant
-                const response = await fetch("{{ $.baseUrl }}/bot", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        message: message,
-                        image: modalImage
-                    }),
-                });
-                const responseJson = await response.json();
-                console.log('Modal bot response:', responseJson);
-
-                // Fetch the product IDs from the response
-                const extractedIds = extractIdsFromString(responseJson.message);
-                console.log('Modal extracted IDs:', extractedIds);
-
-                // Replace the placeholder bot message text with the real response
-                botMessageSpan.innerText = responseJson.message.replace(/\n+[-*\d][\S\s]*/g, "");
-                botMessage.classList.remove("bot-message-loading");
-
-                // If there are any product IDs...
-                if (extractedIds.length > 0) {
-                    // Construct root products div
-                    const botProductsDiv = document.createElement("div");
-                    botProductsDiv.classList.add("bot-products");
-
-                    // For each product...
-                    for (const id of extractedIds) {
-                        try {
-                            // Retrieve product metadata from the Product Catalog
-                            const productResponse = await fetch("{{ $.baseUrl }}/product-meta/" + id, {
-                                method: "GET",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                            });
-                            const product = await productResponse.json();
-
-                            // Construct main product div
-                            const botProductDiv = document.createElement("a");
-                            botProductDiv.classList.add("bot-product");
-                            botProductDiv.href = "{{ $.baseUrl }}/product/" + id;
-                            
-                            // Add click handler to close modal when product is clicked
-                            botProductDiv.addEventListener('click', function() {
-                                closeChatModal();
-                            });
-
-                            // Construct product image
-                            const botProductImg = document.createElement("img");
-                            botProductImg.src = product["picture"];
-                            botProductImg.classList.add("bot-product-img");
-                            botProductImg.onerror = function() { this.style.display = 'none'; };
-                            botProductDiv.appendChild(botProductImg);
-
-                            // Construct product description div
-                            const botProductDescription = document.createElement("div");
-                            botProductDescription.classList.add("bot-product-description");
-                            let productDescription = product["description"];
-                            if (productDescription.length > 350) {
-                                productDescription = productDescription.substring(0, 330) + '...';
-                            }
-                            botProductDescription.innerHTML = "<b>" + product["name"] + "</b><br>" + productDescription;
-                            botProductDiv.appendChild(botProductDescription);
-
-                            // Append main product div into the root products div
-                            botProductsDiv.appendChild(botProductDiv);
-                        } catch (error) {
-                            console.error('Error fetching product:', id, error);
-                        }
-                    }
-                    // Render products
-                    modalBotMessages.appendChild(botProductsDiv);
-                }
-
+            // Simulate bot response for now (since backend service will be integrated later)
+            setTimeout(function() {
+                const botMessage = document.createElement("p");
+                const botMessageSpan = document.createElement("span");
+                botMessageSpan.innerText = "Thank you for your message! I'm a demo chatbot. The full chat service will be integrated soon.";
+                botMessageSpan.classList.add("bot-message-text");
+                botMessage.classList.add("bot-message");
+                botMessage.appendChild(botMessageSpan);
+                modalBotMessages.appendChild(botMessage);
                 modalBotMessages.scrollTo(0, modalBotMessages.scrollHeight);
 
-            } catch (error) {
-                console.error('Error in modal chat:', error);
-                botMessageSpan.innerText = "Sorry, I encountered an error. Please try again.";
-                botMessage.classList.remove("bot-message-loading");
-            }
-
-            // Re-enable button and input field
-            modalBotButton.disabled = false;
-            modalBotInput.disabled = false;
-            modalBotInput.focus();
-            
-            // Clear the image after sending
-            modalImage = null;
-            const fileInput = document.getElementById('modal-bot-input-file');
-            if (fileInput) {
-                fileInput.value = '';
-            }
+                // Re-enable button and input field
+                modalBotButton.disabled = false;
+                modalBotInput.disabled = false;
+                modalBotInput.focus();
+            }, 1000);
         }
 
         // Initialize modal event listeners when DOM is ready
