@@ -117,8 +117,7 @@
                     </p>
                 </div>
                 <div class="bot-input">
-                    <input id="modal-bot-input-text" type="text" style="margin-right: 30px;" class="bot-input-text" placeholder="Recommend me items...">
-                    <input id="modal-bot-input-file" type="file" class="bot-input-file-button" onchange="getModalBase64()">
+                    <input id="modal-bot-input-text" type="text" class="bot-input-text" placeholder="Recommend me items...">
                     <button id="modal-bot-input-button" class="bot-input-button">Send</button>
                 </div>
             </div>
@@ -178,20 +177,6 @@
         }
 
         // Modal chat functionality
-        let modalImage;
-        
-        function getModalBase64() {
-            const fileInput = document.getElementById('modal-bot-input-file');
-            if (fileInput && fileInput.files[0]) {
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-                reader.onloadend = function () {
-                    modalImage = reader.result;
-                    console.log('Modal image loaded:', modalImage);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
 
         function extractIdsFromString(message) {
             const idPattern = /\[([a-zA-Z0-9-]+)\]/g;

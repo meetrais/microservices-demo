@@ -312,6 +312,25 @@ pecific chat styling */
   border-top: 1px solid #e0e0e0;
   border-radius: 0;
   background-color: #f8f9fa;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-modal-content .bot-input-text {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 10px 16px;
+  outline: none;
+  font-size: 14px;
+  background-color: white;
+  border-bottom: none;
+}
+
+.chat-modal-content .bot-input-text:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
 }
 
 .chat-modal-content .bot-message,
