@@ -83,11 +83,8 @@
                     {{ end }}
 
                     {{ if $.assistant_enabled }}
-                    <a href="#" class="chat-link" onclick="openChatModal(); return false;" title="Chat with Assistant">
-                      <div class="chat-icon-container">
-                        <img src="{{ $.baseUrl }}/static/icons/Hipster_ChatIcon.svg" alt="Chat with Assistant" class="chat-icon" />
-                        <span class="chat-label">Chat</span>
-                      </div>
+                    <a href="#" class="cart-link" onclick="openChatModal(); return false;">
+                        <img src="{{ $.baseUrl }}/static/icons/Hipster_ChatIcon.svg" alt="Chat icon" class="logo" title="Chat Assistant" />
                     </a>
                     {{ end }}
 
@@ -136,45 +133,23 @@
         };
 
         function openChatModal() {
-            console.log('openChatModal called');
-            try {
-                // Prevent multiple modal instances
-                if (chatModalState.isOpen) {
-                    console.log('Modal already open, returning');
-                    return;
-                }
-
-                const modal = document.getElementById('chat-modal-overlay');
-                console.log('Modal element found:', modal);
+            console.log('Chat icon clicked!');
+            
+            const modal = document.getElementById('chat-modal-overlay');
+            if (modal) {
+                console.log('Modal found, opening...');
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                chatModalState.isOpen = true;
                 
-                if (modal) {
-                    modal.style.display = 'flex';
-                    modal.style.visibility = 'visible';
-                    modal.style.opacity = '1';
-                    document.body.style.overflow = 'hidden'; // Prevent background scrolling
-                    chatModalState.isOpen = true;
-                    
-                    console.log('Modal should now be visible');
-                    
-                    // Focus management - focus on modal container
-                    const modalContainer = modal.querySelector('.chat-modal-container');
-                    if (modalContainer) {
-                        modalContainer.focus();
-                    }
-                    
-                    // Initialize chat modal functionality
-                    if (!chatModalState.isInitialized) {
-                        console.log('Initializing chat modal');
-                        initializeChatModal();
-                        chatModalState.isInitialized = true;
-                    }
-                } else {
-                    // Fallback to assistant page if modal not available
-                    console.warn('Chat modal not found, redirecting to assistant page');
-                    window.location.href = '{{ $.baseUrl }}/assistant';
+                // Initialize chat if not done yet
+                if (!chatModalState.isInitialized) {
+                    setTimeout(initializeChatModal, 100);
+                    chatModalState.isInitialized = true;
                 }
-            } catch (error) {
-                console.error('Failed to open chat modal:', error);
+            } else {
+                console.error('Modal not found!');
+                alert('Chat modal not found. Redirecting to assistant page.');
                 window.location.href = '{{ $.baseUrl }}/assistant';
             }
         }
