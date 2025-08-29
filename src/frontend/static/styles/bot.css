@@ -166,35 +166,36 @@ button[disabled]{
 }
 /* Modal Overlay Styles */
 .chat-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10000;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 99999 !important;
   backdrop-filter: blur(3px);
   padding: 20px;
   box-sizing: border-box;
 }
 
 .chat-modal-container {
-  background-color: white;
+  background-color: white !important;
   border-radius: 16px;
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.3);
-  width: 100%;
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+  width: 90%;
   max-width: 600px;
   height: 80vh;
   max-height: 700px;
   min-height: 500px;
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
   overflow: hidden;
   animation: modalSlideIn 0.3s ease-out;
   position: relative;
+  border: 2px solid #ddd;
 }
 
 @keyframes modalSlideIn {

@@ -138,13 +138,25 @@
             const modal = document.getElementById('chat-modal-overlay');
             if (modal) {
                 console.log('Modal found, opening...');
-                modal.style.display = 'flex';
+                
+                // Force modal to be visible with important styles
+                modal.style.setProperty('display', 'flex', 'important');
+                modal.style.setProperty('position', 'fixed', 'important');
+                modal.style.setProperty('top', '0', 'important');
+                modal.style.setProperty('left', '0', 'important');
+                modal.style.setProperty('width', '100vw', 'important');
+                modal.style.setProperty('height', '100vh', 'important');
+                modal.style.setProperty('z-index', '99999', 'important');
+                modal.style.setProperty('background-color', 'rgba(0, 0, 0, 0.7)', 'important');
+                
                 document.body.style.overflow = 'hidden';
                 chatModalState.isOpen = true;
                 
+                console.log('Modal styles applied, should be visible now');
+                
                 // Initialize chat if not done yet
                 if (!chatModalState.isInitialized) {
-                    setTimeout(initializeChatModal, 100);
+                    setTimeout(initializeChatModal, 200);
                     chatModalState.isInitialized = true;
                 }
             } else {
@@ -377,8 +389,12 @@
 
         // Initialize modal event listeners when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, checking for modal...');
+            
             const modal = document.getElementById('chat-modal-overlay');
             if (modal) {
+                console.log('Modal found in DOM:', modal);
+                
                 // Close modal when clicking outside of it (backdrop click)
                 modal.addEventListener('click', function(event) {
                     if (event.target === modal) {
@@ -390,7 +406,12 @@
                 const modalContainer = modal.querySelector('.chat-modal-container');
                 if (modalContainer) {
                     modalContainer.setAttribute('tabindex', '-1');
+                    console.log('Modal container found:', modalContainer);
+                } else {
+                    console.error('Modal container not found!');
                 }
+            } else {
+                console.error('Modal not found in DOM!');
             }
 
             // Close modal with Escape key
