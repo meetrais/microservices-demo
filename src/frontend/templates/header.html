@@ -83,8 +83,11 @@
                     {{ end }}
 
                     {{ if $.assistant_enabled }}
-                    <a href="#" class="chat-link" onclick="openChatModal(); return false;">
-                      <img src="{{ $.baseUrl }}/static/icons/Hipster_ChatIcon.svg" style="width: 22px; height: 22px;" alt="Chat icon" class="logo" title="Chat Assistant" />
+                    <a href="#" class="chat-link" onclick="openChatModal(); return false;" title="Chat with Assistant">
+                      <div class="chat-icon-container">
+                        <img src="{{ $.baseUrl }}/static/icons/Hipster_ChatIcon.svg" alt="Chat with Assistant" class="chat-icon" />
+                        <span class="chat-label">Chat</span>
+                      </div>
                     </a>
                     {{ end }}
 
