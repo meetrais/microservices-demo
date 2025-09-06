@@ -232,7 +232,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 		renderHTTPError(log, r, w, errors.Wrap(err, "failed to add to cart"), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("location", baseUrl + "/cart")
+	w.Header().Set("location", baseUrl+"/cart")
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -244,7 +244,7 @@ func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Reques
 		renderHTTPError(log, r, w, errors.Wrap(err, "failed to empty cart"), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("location", baseUrl + "/")
+	w.Header().Set("location", baseUrl+"/")
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -401,17 +401,18 @@ func (fe *frontendServer) placeOrderHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (fe *frontendServer) assistantHandler(w http.ResponseWriter, r *http.Request) {
-	currencies, err := fe.getCurrencies(r.Context())
-	if err != nil {
-		renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve currencies"), http.StatusInternalServerError)
-		return
-	}
-
+	// Assistant page doesn't need currencies - skip the service call to avoid errors
+	// when other microservices aren't running
 	if err := templates.ExecuteTemplate(w, "assistant", injectCommonTemplateData(r, map[string]interface{}{
 		"show_currency": false,
-		"currencies":    currencies,
+		"currencies":    []string{}, // Empty currencies since we don't need them for chatbot
 	})); err != nil {
-		log.Println(err)
+		// Get logger from context, with fallback
+		if log, ok := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger); ok {
+			log.Println(err)
+		} else {
+			fmt.Println("Template error:", err)
+		}
 	}
 }
 
@@ -423,7 +424,7 @@ func (fe *frontendServer) logoutHandler(w http.ResponseWriter, r *http.Request) 
 		c.MaxAge = -1
 		http.SetCookie(w, c)
 	}
-	w.Header().Set("Location", baseUrl + "/")
+	w.Header().Set("Location", baseUrl+"/")
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -454,46 +455,100 @@ func (fe *frontendServer) chatBotHandler(w http.ResponseWriter, r *http.Request)
 		Message string `json:"message"`
 	}
 
-	type LLMResponse struct {
-		Content string         `json:"content"`
-		Details map[string]any `json:"details"`
+	type ExternalChatRequest struct {
+		Message string `json:"message"`
+		Image   string `json:"image,omitempty"`
 	}
 
-	var response LLMResponse
+	type ExternalChatResponse struct {
+		Response string `json:"response"`
+	}
 
-	url := "http://" + fe.shoppingAssistantSvcAddr
-	req, err := http.NewRequest(http.MethodPost, url, r.Body)
+	// Parse incoming request
+	var requestBody ExternalChatRequest
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		renderHTTPError(log, r, w, errors.Wrap(err, "failed to decode request body"), http.StatusBadRequest)
+		return
+	}
+
+	// Prepare request to external service - use direct IP to avoid DNS issues
+	externalURL := "http://35.224.27.62/chat"
+	requestData := map[string]interface{}{
+		"message": requestBody.Message,
+	}
+
+	// Add image if present
+	if requestBody.Image != "" {
+		requestData["image"] = requestBody.Image
+	}
+
+	jsonData, err := json.Marshal(requestData)
 	if err != nil {
-		renderHTTPError(log, r, w, errors.Wrap(err, "failed to create request"), http.StatusInternalServerError)
+		renderHTTPError(log, r, w, errors.Wrap(err, "failed to marshal request data"), http.StatusInternalServerError)
+		return
+	}
+
+	// Create request to external service
+	req, err := http.NewRequest(http.MethodPost, externalURL, strings.NewReader(string(jsonData)))
+	if err != nil {
+		renderHTTPError(log, r, w, errors.Wrap(err, "failed to create request to external service"), http.StatusInternalServerError)
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	res, err := http.DefaultClient.Do(req)
+
+	// Send request to external service with better error handling
+	client := &http.Client{
+		Timeout: 15 * time.Second, // Reduced timeout
+	}
+
+	log.Infof("Sending request to external chatbot service: %s", externalURL)
+	res, err := client.Do(req)
 	if err != nil {
-		renderHTTPError(log, r, w, errors.Wrap(err, "failed to send request"), http.StatusInternalServerError)
+		log.Warnf("Failed to connect to external chatbot service: %v", err)
+		// Provide fallback response instead of error
+		fallbackResponse := "I'm sorry, I'm having trouble connecting to my chat service right now. However, I can still help you! You can browse our products, add items to your cart, and complete your purchase. Is there anything specific about our store I can help you with?"
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(Response{Message: fallbackResponse})
+		return
+	}
+	defer res.Body.Close()
+
+	// Check HTTP status code
+	if res.StatusCode != http.StatusOK {
+		log.Warnf("External service returned non-200 status: %d", res.StatusCode)
+		fallbackResponse := "I'm experiencing some issues with my chat service. You can still browse our products and make purchases. How can I help you with your shopping today?"
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(Response{Message: fallbackResponse})
 		return
 	}
 
+	// Read response from external service
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		renderHTTPError(log, r, w, errors.Wrap(err, "failed to read response"), http.StatusInternalServerError)
+		log.Warnf("Failed to read response from external service: %v", err)
+		fallbackResponse := "I'm having trouble processing responses right now, but I'm still here to help! What can I assist you with regarding our store?"
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(Response{Message: fallbackResponse})
 		return
 	}
 
-	fmt.Printf("%+v\n", body)
-	fmt.Printf("%+v\n", res)
+	log.Infof("External service response: %s", string(body))
 
-	err = json.Unmarshal(body, &response)
+	var externalResponse ExternalChatResponse
+	err = json.Unmarshal(body, &externalResponse)
 	if err != nil {
-		renderHTTPError(log, r, w, errors.Wrap(err, "failed to unmarshal body"), http.StatusInternalServerError)
+		log.Warnf("Failed to unmarshal external service response: %v", err)
+		fallbackResponse := "I received a response but had trouble understanding it. Let me help you anyway! What would you like to know about our products or store?"
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(Response{Message: fallbackResponse})
 		return
 	}
 
-	// respond with the same message
-	json.NewEncoder(w).Encode(Response{Message: response.Content})
-
-	w.WriteHeader(http.StatusOK)
+	// Successfully got response from external service
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Response{Message: externalResponse.Response})
+	log.Infof("Successfully provided chatbot response")
 }
 
 func (fe *frontendServer) setCurrencyHandler(w http.ResponseWriter, r *http.Request) {
