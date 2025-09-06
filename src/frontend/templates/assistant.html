@@ -144,8 +144,9 @@
       console.log("Extracted product IDs:", extractedIds);
 
       // Replace the placeholder bot message text with the real response
-      // Making sure to remove any lists or product IDs from that message
-      botMessageSpan.innerText = responseJson.message.replace(/\n+[-*\d][\S\s]*/g, "");
+      // Convert \n to <br> for proper line break display and preserve formatting  
+      const formattedMessage = responseJson.message.replace(/\n/g, '<br>');
+      botMessageSpan.innerHTML = formattedMessage;
       botMessage.classList.remove("bot-message-loading");
 
       // If there are any product IDs...

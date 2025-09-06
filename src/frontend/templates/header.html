@@ -288,7 +288,9 @@
                 console.log("Extracted product IDs:", extractedIds);
 
                 // Replace the loading animation with the actual response
-                botMessageSpan.innerText = responseJson.message.replace(/\n+[-*\d][\S\s]*/g, "");
+                // Convert \n to <br> for proper line break display and preserve formatting
+                const formattedMessage = responseJson.message.replace(/\n/g, '<br>');
+                botMessageSpan.innerHTML = formattedMessage;
                 botMessage.classList.remove("bot-message-loading");
 
                 // If there are any product IDs, handle product recommendations
